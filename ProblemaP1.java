@@ -1,60 +1,64 @@
 //Laura Sanchez Bernal - 202411353
 //Julian David Ramos Gonzalez - 202414411
 
+import java.io.*;
 import java.util.*;
 
 public class ProblemaP1 {
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+    static final long INFINITO = Long.MAX_VALUE / 2;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StreamTokenizer st = new StreamTokenizer(br);
+
         StringBuilder salida = new StringBuilder();
 
-        int casos = sc.nextInt();
+        st.nextToken();
+        int casos = (int) st.nval;
 
         for (int c = 0; c < casos; c++) {
 
-            int n = sc.nextInt(); // numero de orbitas
-            int m = sc.nextInt(); // numero de posiciones por orbita
-            int p = sc.nextInt(); // numero de portales
+            st.nextToken(); int n = (int) st.nval;
+            st.nextToken(); int m = (int) st.nval;
+            st.nextToken(); int p = (int) st.nval;
 
             int[] e = new int[n + 1];
             for (int i = 1; i <= n; i++) {
-                e[i] = sc.nextInt(); // costo de moverse dentro de la orbita i
+                st.nextToken();
+                e[i] = (int) st.nval; // costo de moverse dentro de la orbita i
             }
 
-            int[] xs = new int[p];
-            int[] ys = new int[p];
-            int[] xe = new int[p];
-            int[] ye = new int[p];
+            // agrupamos los portales por su orbita de origen
+            // portalesPorOrigen[i] = lista de portales que salen de la orbita i
+            List<int[]>[] portalesPorOrigen = new List[n + 1];
+            for (int i = 1; i <= n; i++) {
+                portalesPorOrigen[i] = new ArrayList<>();
+            }
+
             for (int k = 0; k < p; k++) {
-                xs[k] = sc.nextInt();
-                ys[k] = sc.nextInt();
-                xe[k] = sc.nextInt();
-                ye[k] = sc.nextInt();
+                st.nextToken(); int xs = (int) st.nval;
+                st.nextToken(); int ys = (int) st.nval;
+                st.nextToken(); int xe = (int) st.nval;
+                st.nextToken(); int ye = (int) st.nval;
+                portalesPorOrigen[xs].add(new int[]{ys, xe, ye}); // guardamos solo lo que falta
             }
 
-            long costo = calcularCostoMinimo(n, m, e, p, xs, ys, xe, ye);
+            long costo = calcularCostoMinimo(n, m, e, portalesPorOrigen);
 
-            if (costo == -1) {
-                salida.append("NO EXISTE\n");
-            } else {
-                salida.append(costo).append("\n");
-            }
+            salida.append(costo == -1 ? "NO EXISTE" : costo).append("\n");
         }
 
         System.out.print(salida);
     }
 
-    
-    static long calcularCostoMinimo(int n, int m, int[] e, int p, int[] xs, int[] ys, int[] xe, int[] ye) {
-
-        long infinito = Long.MAX_VALUE / 2;
+    static long calcularCostoMinimo(int n, int m, int[] e, List<int[]>[] portalesPorOrigen) {
 
         // D[i][j] = costo minimo para llegar desde (1,1) hasta (i,j)
         long[][] D = new long[n + 1][m + 1];
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
-                D[i][j] = infinito; // al inicio, todo se considera inalcanzable
+                D[i][j] = INFINITO;
             }
         }
         D[1][1] = 0; // caso base
@@ -77,19 +81,21 @@ public class ProblemaP1 {
                 }
             }
 
-            // revisamos todos los portales, y usamos los que salen de la orbita i
-            for (int k = 0; k < p; k++) {
-                if (xs[k] == i) {
-                    long costoPortal = D[xs[k]][ys[k]]; // el portal no suma costo
-                    if (costoPortal < D[xe[k]][ye[k]]) {
-                        D[xe[k]][ye[k]] = costoPortal;
-                    }
+            // solo revisamos los portales que salen de esta orbita, ya agrupados
+            for (int[] portal : portalesPorOrigen[i]) {
+                int ys = portal[0];
+                int xe = portal[1];
+                int ye = portal[2];
+
+                long costoPortal = D[i][ys]; // el portal no suma costo
+                if (costoPortal < D[xe][ye]) {
+                    D[xe][ye] = costoPortal;
                 }
             }
         }
 
-        if (D[n][m] >= infinito) {
-            return -1; // nunca se alcanzo el destino
+        if (D[n][m] >= INFINITO) {
+            return -1;
         }
         return D[n][m];
     }
