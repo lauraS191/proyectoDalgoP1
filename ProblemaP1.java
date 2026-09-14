@@ -1,6 +1,6 @@
 //Laura Sanchez Bernal - 202411353
 //Julian David Ramos Gonzalez - 202414411
-//lll
+
 import java.io.*;
 import java.util.*;
 
